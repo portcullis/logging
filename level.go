@@ -6,7 +6,7 @@ import "strconv"
 // Levels are defaulted to that of syslog severity level https://en.wikipedia.org/wiki/Syslog
 //
 // Interpretation of the Levels is up to the appliation that is using them, the comments provided are only recommendations
-type Level int
+type Level uint8
 
 const (
 	// LevelEmergency - A panic condition.
@@ -37,6 +37,8 @@ const (
 	//
 	// This is not part of the syslog spec, and might not be supported by all logging.Writer implementations
 	LevelTrace
+
+	// Level 9-254 not handled
 
 	// LevelNone - Not inteded to have output
 	LevelNone Level = 255
@@ -96,4 +98,15 @@ func (l Level) Short() string {
 // Prefix returns the syslog/journald prefix format of <#>
 func (l Level) Prefix() string {
 	return "<" + strconv.Itoa(int(l)) + ">"
+}
+
+// Is will return if the provided Level is verbose enough from the current level. This is suitable for checking before outputing logs
+//
+// i.e. entry.Level.Is(LevelDebug) => write it when Debug-Emergency Level
+func (l Level) Is(lvl Level) bool {
+	if lvl == LevelNone {
+		return false
+	}
+
+	return l <= lvl
 }

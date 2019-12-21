@@ -20,6 +20,6 @@ func Benchmark_Log(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		l.Write(logging.Level(0), "This was a mistake %q", true)
+		l.Info("This was a mistake %q", true)
 	}
 }

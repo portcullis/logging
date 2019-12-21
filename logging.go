@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"strings"
 	"sync"
 	"time"
 )
@@ -54,6 +55,36 @@ func (l *Log) Write(lvl Level, msg string, args ...interface{}) {
 	}
 }
 
+// Critical will write a Critical log entry
+func (l *Log) Critical(msg string, args ...interface{}) {
+	l.Write(LevelCritical, msg, args...)
+}
+
+// Error will write an Error log entry
+func (l *Log) Error(msg string, args ...interface{}) {
+	l.Write(LevelError, msg, args...)
+}
+
+// Warning will write a Warning log entry
+func (l *Log) Warning(msg string, args ...interface{}) {
+	l.Write(LevelWarning, msg, args...)
+}
+
+// Info will write an Informational log entry
+func (l *Log) Info(msg string, args ...interface{}) {
+	l.Write(LevelInformational, msg, args...)
+}
+
+// Debug will write a Debug log entry
+func (l *Log) Debug(msg string, args ...interface{}) {
+	l.Write(LevelDebug, msg, args...)
+}
+
+// Trace will write a Trace log entry
+func (l *Log) Trace(msg string, args ...interface{}) {
+	l.Write(LevelTrace, msg, args...)
+}
+
 func (l *Log) innerWriter(lvl Level, msg string, args []interface{}, fields []Field) {
 	l.once.Do(l.initialize)
 
@@ -64,7 +95,7 @@ func (l *Log) innerWriter(lvl Level, msg string, args []interface{}, fields []Fi
 	e := l.entries.Get()
 	e.Timestamp = time.Now()
 	e.Level = lvl
-	e.Message = msg
+	e.Message = strings.TrimSpace(msg)
 
 	for i := range args {
 		e.Arguments = append(e.Arguments, args[i])
