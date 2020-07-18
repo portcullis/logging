@@ -1,12 +1,31 @@
 package logging
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
 // Level for logging
 // Levels are defaulted to that of syslog severity level https://en.wikipedia.org/wiki/Syslog
 //
 // Interpretation of the Levels is up to the appliation that is using them, the comments provided are only recommendations
 type Level uint8
+
+var (
+	levelStringMap = make(map[string]Level)
+)
+
+func init() {
+	// build out a map of all our string based names to actual levels, easier to just iterate
+	for i := uint8(0); i < uint8(LevelNone); i++ {
+		if Level(i).String() == "" {
+			continue
+		}
+		levelStringMap[strings.ToLower(Level(i).String())] = Level(i)
+		levelStringMap[strings.ToLower(Level(i).Short())] = Level(i)
+	}
+}
 
 const (
 	// LevelEmergency - A panic condition.
@@ -109,4 +128,35 @@ func (l Level) Is(lvl Level) bool {
 	}
 
 	return l <= lvl
+}
+
+// MarshalSetting provides the custom string output for the log level in config
+func (l Level) MarshalSetting() string {
+	return l.String()
+}
+
+// UnmarshalSetting provides the custom parsing of log levels in config
+func (l *Level) UnmarshalSetting(v string) error {
+	if v == "" {
+		return nil
+	}
+
+	lm, found := levelStringMap[strings.ToLower(v)]
+	if !found {
+		return fmt.Errorf("value %q is not a valid log level", v)
+	}
+
+	*l = lm
+
+	return nil
+}
+
+// Equals returns if the current value matches the input
+func (l Level) Equals(v string) bool {
+	lm, found := levelStringMap[strings.ToLower(v)]
+	if !found {
+		return false
+	}
+
+	return strings.EqualFold(l.String(), lm.String())
 }
