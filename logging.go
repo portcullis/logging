@@ -2,14 +2,12 @@ package logging
 
 import (
 	"strings"
-	"sync"
 	"time"
 )
 
 // Log for ... writing logs
 type Log struct {
-	entries *entryPool
-	once    sync.Once
+	entries entryPool
 	parent  *Log
 	fields  []Field
 	writer  Writer
@@ -18,7 +16,6 @@ type Log struct {
 // New creates a new Log instance with the specified options
 func New(opts ...Option) *Log {
 	l := &Log{}
-	l.once.Do(l.initialize)
 
 	for _, opt := range opts {
 		opt(l)
@@ -31,25 +28,15 @@ func New(opts ...Option) *Log {
 func (l *Log) WithFields(fields ...Field) *Log {
 	child := &Log{
 		parent: l,
-		fields: fields,
+		fields: append(l.fields, fields...),
 	}
-
-	l.once.Do(l.initialize)
 
 	return child
 }
 
-func (l *Log) initialize() {
-	l.entries = newEntryPool()
-	l.fields = make([]Field, 0)
-	l.writer = Discard
-}
-
 func (l *Log) Write(lvl Level, msg string, args ...interface{}) {
-	l.once.Do(l.initialize)
-
 	if l.parent != nil {
-		l.parent.innerWriter(lvl, msg, args, append(l.parent.fields, l.fields...))
+		l.parent.innerWriter(lvl, msg, args, l.fields)
 	} else {
 		l.innerWriter(lvl, msg, args, l.fields)
 	}
@@ -86,24 +73,23 @@ func (l *Log) Trace(msg string, args ...interface{}) {
 }
 
 func (l *Log) innerWriter(lvl Level, msg string, args []interface{}, fields []Field) {
-	l.once.Do(l.initialize)
-
 	if l.writer == nil {
 		return
 	}
 
 	e := l.entries.Get()
+	defer l.entries.Put(e)
+
 	e.Timestamp = time.Now()
 	e.Level = lvl
 	e.Message = strings.TrimSpace(msg)
 
+	// this gives up some CPU to not have any allocations
 	for i := range args {
 		e.Arguments = append(e.Arguments, args[i])
 	}
 
 	e.Fields = l.fields[:]
-
-	defer l.entries.Put(e)
 
 	l.writer.Write(*e)
 }

@@ -24,17 +24,11 @@ type entryPool struct {
 	pool sync.Pool
 }
 
-func newEntryPool() *entryPool {
-	return &entryPool{
-		pool: sync.Pool{
-			New: func() interface{} {
-				return &Entry{}
-			},
-		},
-	}
-}
+var entryPoolConstructor = func() interface{} { return &Entry{} }
 
 func (ep *entryPool) Get() *Entry {
+	// set every time, so we know it is set, most effecient to keep locks and initializers out of the way
+	ep.pool.New = entryPoolConstructor
 	return ep.pool.Get().(*Entry)
 }
 

@@ -6,12 +6,12 @@ import (
 	"github.com/portcullis/logging"
 )
 
-func Benchmark_Log(b *testing.B) {
+func Benchmark_Log_WithFields(b *testing.B) {
 	l := logging.New(
+		logging.WithWriter(logging.Discard),
 		logging.WithFields(
 			logging.Field{Name: "Test", Value: "Hello"},
 		),
-		logging.WithWriter(logging.Discard),
 	).WithFields(
 		logging.Field{Name: "Value", Value: false},
 	)
@@ -20,6 +20,22 @@ func Benchmark_Log(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		l.Info("This was a mistake %q", true)
+		l.Info("This was a mistake %q", true, false)
+	}
+}
+
+func Benchmark_Log(b *testing.B) {
+	l := logging.New(
+		logging.WithWriter(logging.Discard),
+		logging.WithFields(
+			logging.Field{Name: "Test", Value: "Hello"},
+		),
+	)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		l.Info("This was a mistake %q", false)
 	}
 }
