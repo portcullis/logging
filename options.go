@@ -15,9 +15,7 @@ func (o Option) Apply(l *Log) {
 // WithFields options will append the specified fields to the Log
 func WithFields(fields ...Field) Option {
 	return func(l *Log) {
-		for _, f := range fields {
-			l.fields = append(l.fields, f)
-		}
+		l.fields = append(l.fields, fields...)
 	}
 }
 
