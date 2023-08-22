@@ -1,3 +1,4 @@
+// Deprecated: This package has been deprecated and log/slog is preferred
 package logging
 
 import (
